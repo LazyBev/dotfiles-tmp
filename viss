@@ -245,9 +245,7 @@ graphicsConfig() {
     if [ "$libc" == "glibc" ]; then
         graphics=$(drawDialog --title 'Graphics Drivers' --extra-button --extra-label "Map" --checklist 'Select graphics drivers, or choose 'Skip' if you would like to skip:' 0 0 0 'intel' '' 'off' 'intel-32bit' '' 'off' 'amd' '' 'off' 'amd-32bit' '' 'off' 'nvidia' '- Proprietary driver' 'off' 'nvidia-32bit' '' 'off' 'nvidia-nouveau' '- Nvidia Nouveau driver (experimental)' 'off' 'nvidia-nouveau-32bit' '' 'off')
         [ "$?" == "3" ] && dungeonmap
-    fi
-
-    if [ "$libc" == "musl" ]; then
+    else
         graphics=$(drawDialog --title 'Graphics Drivers' --extra-button --extra-label "Map" --checklist 'Select graphics drivers, or choose 'Skip' if you would like to skip: ' 0 0 0 'intel' '' 'off' 'amd' '' 'off' 'nvidia-nouveau' '- Nvidia Nouveau driver (experimental)' 'off')
         [ "$?" == "3" ] && dungeonmap
     fi
