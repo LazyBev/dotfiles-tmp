@@ -7,7 +7,7 @@ for i in "${graphicsArray[@]}"
 do
     case $i in
         amd)
-            install mesa-dri vulkan-loader mesa-vulkan-radeon mesa-vaapi mesa-vdpau
+            install mesa-dri vulkan-loader mesa-vulkan-radeon mesa-vaapi
         ;;
 
         amd-32bit)
