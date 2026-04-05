@@ -5,8 +5,8 @@ mkdir -p /mnt/var/db/xbps/keys || die
 cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys || die
 
 commandFailure="Updating xbps has failed."
-xbps-install -Suy xbps || die
-xbps-install -r /mnt -Suy xbps || die
+xbps-install -Suy xbps; true
+xbps-install -r /mnt -Suy xbps; true
 
 commandFailure="Base system installation has failed."
 
