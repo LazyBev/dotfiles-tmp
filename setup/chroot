@@ -53,7 +53,7 @@ commandFailure="Setting root directory permissions has failed."
 chown root:root / || die
 chmod 755 / || die
 
-[ -e /etc/sv/dbus ] &&
+[ -e /etc/sv/dbus ] && [ ! -e /var/service/dbus ] &&
     { ln -s /etc/sv/dbus /var/service || { commandFailure="Enabling dbus has failed." ; die ; } ; }
 
 [ "$encryption" == "Yes" ] &&
