@@ -4,6 +4,10 @@ commandFailure="Copying XBPS keys has failed."
 mkdir -p /mnt/var/db/xbps/keys || die
 cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys || die
 
+commandFailure="Updating xbps has failed."
+xbps-install -Suy xbps || die
+xbps-install -r /mnt -Suy xbps || die
+
 commandFailure="Base system installation has failed."
 
 case "$basesystem" in
