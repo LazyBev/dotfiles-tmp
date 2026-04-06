@@ -4,7 +4,6 @@ commandFailure="Copying XBPS keys has failed."
 mkdir -p /mnt/var/db/xbps/keys || die
 cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys || die
 
-commandFailure="Updating xbps has failed."
 xbps-install -Suy xbps; true
 xbps-install -r /mnt -Suy xbps; true
 
@@ -24,7 +23,7 @@ case "$basesystem" in
         if [ "$kernel" != "linux" ] ; then
             echo "ignorepkg=linux" >> /mnt/etc/xbps.d/ignore.conf || die
             install "$kernel"
-            system "xbps-remove -ROoy linux"
+            chroot /mnt /bin/bash -c "xbps-remove -ROoy linux" || true
 
             # having any kernel around except for the target will confuse setup/chroot
             # when it goes to find the kernel to reconfigure when building a UKI
@@ -33,12 +32,12 @@ case "$basesystem" in
 
         if [ "$su" != "sudo" ]; then
             echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/ignore.conf || die
-            system "xbps-remove -ROoy sudo"
+            chroot /mnt /bin/bash -c "xbps-remove -ROoy sudo" || true
         fi
 
         if [ "$initrd" != "dracut" ]; then
             echo "ignorepkg=dracut" >> /mnt/etc/xbps.d/ignore.conf || die
-            system "xbps-remove -ROoy dracut"
+            chroot /mnt /bin/bash -c "xbps-remove -ROoy dracut" || true
 
             install "$initrd"
         else
@@ -53,7 +52,7 @@ case "$basesystem" in
             echo "ignorepkg=iw" >> /mnt/etc/xbps.d/ignore.conf || die
             echo "ignorepkg=wpa_supplicant" >> /mnt/etc/xbps.d/ignore.conf || die
 
-            system "xbps-remove -ROoy wifi-firmware iw wpa_supplicant"
+            chroot /mnt /bin/bash -c "xbps-remove -ROoy wifi-firmware iw wpa_supplicant" || true
         fi
     ;;
     *)
@@ -72,22 +71,18 @@ case "$basesystem" in
             doas) install opendoas ;;
         esac
 
-        # despite defining a custom basesystem, dracut is likely
-        # to be pulled in as a dependency, ignore it and remove
-        # if it exists:
         if [ "$initrd" != "dracut" ]; then
             echo "ignorepkg=dracut" >> /mnt/etc/xbps.d/ignore.conf || die
-            system "xbps-remove -ROoy dracut"
+            chroot /mnt /bin/bash -c "xbps-remove -ROoy dracut" || true
         fi
 
         install "$initrd"
 
         [ "$initrd" == "dracut" ] &&
-            install binutils # allow dracut to strip the initramfs
+            install binutils
 
         install dosfstools
 
-        # zfsbootmenu will automatically pull in zfs
         case "$filesystem" in
             xfs) install xfsprogs ;;
             ext4) install e2fsprogs ;;
@@ -261,8 +256,6 @@ elif [ "$initrd" == "tinyramfs" ]; then
         ;;
     esac
 
-    # making an exception to the "style" of this script given how
-    # spammed this path is here
     trfsconfig="/mnt/etc/tinyramfs/config"
 
     commandFailure="Editing tinyramfs config has failed."
@@ -274,14 +267,9 @@ elif [ "$initrd" == "tinyramfs" ]; then
         echo "luks_root=UUID=${partVar}" >> "$trfsconfig" || die
         partVar=$(blkid -o value -s UUID /dev/mapper/void)
 
-        # the order hooks are included in is also the order they will be executed in,
-        # lvm must come *after* luks so tinyramfs will unlock before
-        # attempting to activate the "void" volume group
         [ "$lvm" == "Yes" ] &&
             { sed -i 's/hooks="eudev,luks"/hooks="eudev,luks,lvm"/g' "$trfsconfig" || die ; }
 
-        # eliminate the need to enter passphrase twice
-        # once /boot has been decrypted
         [ "$bootloader" == "grub" ] &&
             { echo 'luks_key=/boot/volume.key' >> "$trfsconfig" || die ; }
     else
@@ -322,9 +310,6 @@ fi
 echo "$hostname" > /mnt/etc/hostname ||
     { commandFailure="Hostname configuration has failed." ; die ; }
 
-# Configure non-partition methods of swapping
-# I feel like this isn't really the place for this-
-# but neither is setup-disk or otherwise really, so:
 case "$swapStyle" in
     zram)
         commandFailure="Configuring zram has failed."
@@ -339,7 +324,7 @@ case "$swapStyle" in
             swapSize=$(echo "$swapSize" | sed 's/G//g')
             echo "Creating swapfile..."
             dd if=/dev/zero of=/mnt/var/swapfile bs=1024M count="$swapSize" status=progress || die
-            chmod 600 /mnt/var/swapfile || die # root only.
+            chmod 600 /mnt/var/swapfile || die
             mkswap /mnt/var/swapfile || die
         else
             btrfs filesystem mkswapfile --size "$swapSize" --uuid clear /mnt/swap/swapfile || die
