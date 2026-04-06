@@ -29,8 +29,7 @@ main() {
 
     # dbus and polkitd may or may not be installed by other things, recheck
     # this will fail if /var/service/dbus is checked as opposed to the default runsvdir
-    [ ! -e /mnt/etc/runit/runsvdir/default/dbus ] &&
-    { system "ln -s /etc/sv/dbus /var/service" 2>/dev/null || echo "Warning: dbus service already enabled, skipping." ; }
+    [ ! -e /mnt/etc/runit/runsvdir/default/dbus ] && { system "ln -s /etc/sv/dbus /var/service" 2>/dev/null || echo "Warning: dbus service already enabled, skipping." ; }
 
     # allow proc access to polkitd for hardened proc module
     # if not already done by the harden proc module
