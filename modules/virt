@@ -4,9 +4,6 @@ description="- Installs and configures qemu and libvirt"
 status=off
 
 main() {
-    # netcat is installed here along with everything else because
-    # machines using this box remotely via virt-manager require it,
-    # such as in the context of using void on a virtualization server
     commandFailure="Installing qemu and libvirt has failed." &&
         install qemu libvirt virtiofsd polkit dbus netcat
 
@@ -22,17 +19,14 @@ main() {
             system "usermod -aG libvirt $username"
     fi
 
-system "ln -s /etc/sv/libvirtd /var/service" 2>/dev/null || echo "Warning: libvirtd service already enabled, skipping."
-system "ln -s /etc/sv/virtlogd /var/service" 2>/dev/null || echo "Warning: virtlogd service already enabled, skipping."
-system "ln -s /etc/sv/virtlockd /var/service" 2>/dev/null || echo "Warning: virtlockd service already enabled, skipping."
+    chroot /mnt /bin/bash -c "ln -s /etc/sv/libvirtd /var/service" 2>/dev/null || echo "Warning: libvirtd service already enabled, skipping."
+    chroot /mnt /bin/bash -c "ln -s /etc/sv/virtlogd /var/service" 2>/dev/null || echo "Warning: virtlogd service already enabled, skipping."
+    chroot /mnt /bin/bash -c "ln -s /etc/sv/virtlockd /var/service" 2>/dev/null || echo "Warning: virtlockd service already enabled, skipping."
 
     # dbus and polkitd may or may not be installed by other things, recheck
-    # this will fail if /var/service/dbus is checked as opposed to the default runsvdir
-    [ ! -e /mnt/etc/runit/runsvdir/default/dbus ] && { system "ln -s /etc/sv/dbus /var/service" 2>/dev/null || echo "Warning: dbus service already enabled, skipping." ; }
+    [ ! -e /mnt/etc/runit/runsvdir/default/dbus ] &&
+        { chroot /mnt /bin/bash -c "ln -s /etc/sv/dbus /var/service" 2>/dev/null || echo "Warning: dbus service already enabled, skipping." ; }
 
-    # allow proc access to polkitd for hardened proc module
-    # if not already done by the harden proc module
-    # regular chroot is being used here because the system wrapper will die on non-0 exit
     grep "gid=proc /proc" /mnt/etc/rc.local && ! chroot /mnt /bin/bash -c "groups polkitd | grep proc" &&
         { commandFailure="Adding polkitd user to proc group has failed." ; system "usermod -aG proc polkitd" ; }
 
