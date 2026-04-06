@@ -22,10 +22,9 @@ main() {
             system "usermod -aG libvirt $username"
     fi
 
-    commandFailure="Enabling virt services has failed."
-    system "ln -s /etc/sv/libvirtd /var/service"
-    system "ln -s /etc/sv/virtlogd /var/service"
-    system "ln -s /etc/sv/virtlockd /var/service"
+system "ln -s /etc/sv/libvirtd /var/service" 2>/dev/null || echo "Warning: libvirtd service already enabled, skipping."
+system "ln -s /etc/sv/virtlogd /var/service" 2>/dev/null || echo "Warning: virtlogd service already enabled, skipping."
+system "ln -s /etc/sv/virtlockd /var/service" 2>/dev/null || echo "Warning: virtlockd service already enabled, skipping."
 
     # dbus and polkitd may or may not be installed by other things, recheck
     # this will fail if /var/service/dbus is checked as opposed to the default runsvdir
